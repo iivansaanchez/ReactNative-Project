@@ -7,8 +7,10 @@ import { AddScreen } from "./AddScreen";
 
 export function TabScreen() {
   const Tab = createBottomTabNavigator();
+
+  //TabNavigator crea la barra de navegacion inferior
+  //TabScreen sirve para definir las pantallas de navegacion posibles dentro de la navbar
   return (
-    // crea la barra de navegación inferior
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
