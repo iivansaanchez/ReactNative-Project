@@ -4,6 +4,7 @@ import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../utils/Firebase'; 
 
 export function RegisterScreen() {
+  //En este caso creamos un estado que almacena un objeto con los datos que puede obtener del formulario de registro
   const [form, setForm] = useState({
     nick: '',
     name: '',
@@ -13,6 +14,7 @@ export function RegisterScreen() {
     password: '',
   });
 
+  //Maneja los cambios en los campos del formulario y actualiza el estado
   const handleInputChange = (field, value) => {
     setForm({ ...form, [field]: value });
   };
@@ -20,20 +22,25 @@ export function RegisterScreen() {
   const handleSubmit = () => {
     const { email, password, nick, name, lastName1, lastName2 } = form;
 
+    //Condicional que verifica que todos los campos sean obligatorios
     if (!email || !password || !nick || !name || !lastName1 || !lastName2) {
       Alert.alert('Error', 'Todos los campos son obligatorios');
       return;
     }
-
+    //Como en el login en este caso usamos createUser de Firebase
     createUserWithEmailAndPassword(auth, email, password)
+    //En caso que funcione te muestra un mensaje de registro y en consola te muestra el nick nombre y apellidos
       .then(() => {
         Alert.alert('Registro exitoso', 'Usuario creado correctamente');
         console.log('Usuario registrado:', { nick, name, lastName1, lastName2 });
       })
+      //En caso de error mensaje de error
       .catch((error) => {
         Alert.alert('Error', error.message);
       });
   };
+
+  //ScrollView nos permite que el contenido de dentro de este se pueda desplazar hacia abajo ne caso necesario
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
