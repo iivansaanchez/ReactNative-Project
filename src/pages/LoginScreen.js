@@ -8,16 +8,20 @@ export function LoginScreen({ navigation }) {
   const [password, setPassword] = useState('');
 
   const handleLogin = () => {
+    //Este condicional se encarga de validar que el correo y la contraseña no esten vacio, y en su caso muestre un error
     if (!email || !password) {
       Alert.alert('Error', 'Por favor, introduce correo y contraseña');
       return;
     }
-
+    //Esta peticion se encarga de iniciar sesion con Firebase utilizando el auth que tenemos almacenado en el archivo
+    //Firebase.js y el email y la constraseñas introducidas
     signInWithEmailAndPassword(auth, email, password)
+    //En el caso de funciona mensaje de exito y navegacion a TabScreen
       .then(() => {
         Alert.alert('Éxito', 'Has iniciado sesión correctamente');
         navigation.navigate('TabScreen');
       })
+    //En caso de error mensaje de error
       .catch((error) => {
         Alert.alert('Error', error.message);
       });
