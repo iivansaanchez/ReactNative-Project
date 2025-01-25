@@ -6,6 +6,10 @@ import { LoginScreen, RegisterScreen, TabScreen  } from './src/pages/index';
 
 const Stack = createStackNavigator();
 
+
+//NavigationContainer sirve para crear la navegacion
+//StackNavigator sirve para crear la pila de navegacion
+//StackScreen sirve para definir las pantallas de navegacion posibles
 export default function App() {
   return (
     <NavigationContainer>
