@@ -3,13 +3,14 @@ import React, { useState, useEffect } from 'react';
 import Button from '../components/Button';
 import * as ImagePicker from 'expo-image-picker';
 import Modal from 'react-native-modal';
+import { auth } from '../utils/Firebase';
 
 export function AddScreen({ navigation, route }) {
   const [isModalVisible, setModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
-  const { user_id } = route.params || {};
   const [titulo, setTitulo] = useState('');
   const [descripcion, setDescripcion] = useState('');
+  const user_id = auth.currentUser?.uid;
 
   // Solicitar permisos al iniciar la app
   useEffect(() => {
@@ -101,7 +102,7 @@ const saveToDatabase = async (imageUrl) => {
     comentario:descripcion,
   };
   try {
-    const response = await fetch(`http://192.168.0.24:8080/proyecto01/publicaciones`, {
+    const response = await fetch(`http://192.22.1.103:8080/proyecto01/publicaciones`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -125,7 +126,7 @@ const handleSubmit = async () => {
     // Subir imagen a Cloudinary
     await uploadToCloudinary(selectedImage);
     alert("Publicación realizada con éxito.");
-    navigation.navigate('Publicaciones');
+    navigation.navigate('HomeScreen');
   } catch (error) {
     console.error("Error al publicar:", error);
     alert("Hubo un error al realizar la publicación. Intenta nuevamente.");
@@ -257,7 +258,7 @@ const styles = StyleSheet.create({
   input: {
     width: '100%',
     height: 40,
-    backgroundColor: '#DFDFDF',
+    backgroundColor: '#2A2D35',
     borderRadius: 8,
     paddingHorizontal: 15,
     fontSize: 12,

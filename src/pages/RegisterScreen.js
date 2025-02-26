@@ -1,145 +1,116 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ScrollView, Alert } from 'react-native';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../utils/Firebase'; 
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+  ScrollView,
+  Alert,
+  useWindowDimensions
+} from 'react-native';
 
-export function RegisterScreen() {
-  //En este caso creamos un estado que almacena un objeto con los datos que puede obtener del formulario de registro
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../utils/Firebase';
+
+export function RegisterScreen({navigation}) {
+  const { width } = useWindowDimensions();
+
   const [form, setForm] = useState({
+    email: '',
+    password: '',
+    confirmPassword: '',
     nick: '',
     name: '',
     lastName1: '',
-    lastName2: '',
-    email: '',
-    password: '',
+    lastName2: ''
   });
 
-  //Maneja los cambios en los campos del formulario y actualiza el estado
   const handleInputChange = (field, value) => {
     setForm({ ...form, [field]: value });
   };
 
+  const generateMongoId = () => {
+    return Math.floor(Math.random() * 10 ** 24).toString(16); // Genera un _id similar a MongoDB
+  };
+
   const handleSubmit = async () => {
-    // Creamos un objeto con los datos del formulario
-    const { email, password, nick, name, lastName1, lastName2 } = form;
-  
-    // Condicional que verifica que todos los campos sean obligatorios
-    if (!email || !password || !nick || !name || !lastName1 || !lastName2) {
+    const { email, password, confirmPassword, nick, name, lastName1, lastName2 } = form;
+
+    if (!email || !password || !confirmPassword || !nick || !name || !lastName1 || !lastName2) {
       Alert.alert('Error', 'Todos los campos son obligatorios');
       return;
     }
-    
-  
-    // Si pasa el condicional, creamos una variable que almacene los dos apellidos concatenados
-    const apellidos = `${lastName1} ${lastName2}`;
-    const nombre = name;
-    // También almacenamos por defecto una imagen de perfil en Cloudinary
-    const profile_picture = "https://res.cloudinary.com/dr1zlgrdy/image/upload/v1737805087/ImagenDefectoPerfil_jqk3l7.webp";
-  
-    try {
-      // Usamos el auth de Firebase para crear un usuario
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
 
-      // Enviamos un mensaje de alerta tipo pop up que verifique el inicio de sesión del usuario
-      Alert.alert('Registro exitoso', 'Usuario creado correctamente');
-      
-      // Obtenemos el uid del usuario
-      const user_id = userCredential.user.uid;
-      
-      // Creamos el objeto usuario que vamos a enviar a la base de datos
-      const user = {nick, user_id, nombre, apellidos, profile_picture};
-  
-      // Enviamos los datos a la base de datos
-      await connectWithBackend(user);
-      Alert.alert('Éxito', 'Usuario guardado en la base de datos');
-    } catch (error) {
-      // Capturamos cualquier error que ocurra en el proceso
-      Alert.alert('Error', error.message);
+    if (password !== confirmPassword) {
+      Alert.alert('Error', 'Las contraseñas no coinciden');
+      return;
     }
-  };
-  
 
-  //Metodo de union con la base de datos
-  const connectWithBackend = async (data) =>{
-    try{
-      const response = await fetch('http://192.168.0.24:8080/proyecto01/users',{
+    try {
+      // Crear usuario en Firebase
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const userId = userCredential.user.uid; // UID de Firebase
+
+      // Construcción del objeto para MongoDB
+      const data = {
+        nick: nick,
+        user_id: userId,
+        nombre: name,
+        apellidos: `${lastName1} ${lastName2}`, // Se concatenan los apellidos
+        profile_picture: 'https://res.cloudinary.com/dr1zlgrdy/image/upload/v1737805087/ImagenDefectoPerfil_jqk3l7.webp'
+      };
+
+      // Enviar datos a la API
+      const apiUrl = 'http://192.22.1.103:8080/proyecto01/users';
+      const response = await fetch(apiUrl, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       });
 
-      if(!response.ok){
-        throw new Error('Error sending data');
+      if (!response.ok) {
+        throw new Error('Error al registrar en la API');
       }
-      const responseData = await response.json();
-      console.log('Backend response:', responseData);
-    }catch(error){
-      console.error('Error sending user data',error);
+
+      Alert.alert('Registro exitoso', 'Usuario creado correctamente');
+      navigation.navigate('LoginScreen');
+    } catch (error) {
+      Alert.alert('Error', error.message);
     }
-  }
-  //ScrollView nos permite que el contenido de dentro de este se pueda desplazar hacia abajo ne caso necesario
+  };
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.imageContainer}>
+      <View style={[styles.imageContainer, { width: width * 0.9 }]}>
         <Image
-          source={require('../../assets/formulario.png')} 
+          source={require('../../assets/formulario.png')}
           style={styles.image}
         />
       </View>
 
       <Text style={styles.title}>Completar los siguientes campos:</Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Introduzca su nick"
-        placeholderTextColor="#aaa"
-        value={form.nick}
-        onChangeText={(value) => handleInputChange('nick', value)}
-      />
-
-      <TextInput
-        style={styles.input}
-        placeholder="Introduzca su nombre"
-        placeholderTextColor="#aaa"
-        value={form.name}
-        onChangeText={(value) => handleInputChange('name', value)}
-      />
-
-      <TextInput
-        style={styles.input}
-        placeholder="Introduzca su primer apellido"
-        placeholderTextColor="#aaa"
-        value={form.lastName1}
-        onChangeText={(value) => handleInputChange('lastName1', value)}
-      />
-
-      <TextInput
-        style={styles.input}
-        placeholder="Introduzca su segundo apellido"
-        placeholderTextColor="#aaa"
-        value={form.lastName2}
-        onChangeText={(value) => handleInputChange('lastName2', value)}
-      />
-
-      <TextInput
-        style={styles.input}
-        placeholder="Introduzca su correo electrónico"
-        placeholderTextColor="#aaa"
-        value={form.email}
-        onChangeText={(value) => handleInputChange('email', value)}
-        keyboardType="email-address"
-      />
-
-      <TextInput
-        style={styles.input}
-        placeholder="Introduzca su contraseña"
-        placeholderTextColor="#aaa"
-        value={form.password}
-        onChangeText={(value) => handleInputChange('password', value)}
-        secureTextEntry
-      />
+      {['email', 'password', 'confirmPassword', 'nick', 'name', 'lastName1', 'lastName2'].map((field, index) => (
+        <TextInput
+          key={index}
+          style={styles.input}
+          placeholder={
+            field === 'email' ? 'Introduzca su correo' :
+            field === 'password' ? 'Introduzca contraseña' :
+            field === 'confirmPassword' ? 'Repita contraseña' :
+            field === 'nick' ? 'Introduzca su nick' :
+            field === 'name' ? 'Introduzca su nombre' :
+            field === 'lastName1' ? 'Introduzca su primer apellido' : 'Introduzca su segundo apellido'
+          }
+          placeholderTextColor="#aaa"
+          value={form[field]}
+          onChangeText={(value) => handleInputChange(field, value)}
+          secureTextEntry={field.includes('password')}
+          keyboardType={field === 'email' ? 'email-address' : 'default'}
+        />
+      ))}
 
       <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
         <Text style={styles.submitButtonText}>FINALIZAR</Text>
@@ -151,40 +122,38 @@ export function RegisterScreen() {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    backgroundColor: '#121212',
-    alignItems: 'center',
-    paddingVertical: 20,
-  },
-  imageContainer: {
-    marginBottom: 20,
+    backgroundColor: '#2A2D35',
+    alignItems: 'center'
   },
   image: {
-    width: 200, 
-    height: 150,
-    resizeMode: 'contain',
+    width: '100%',
+    height: 350,
+    resizeMode: 'contain'
   },
   title: {
-    color: '#70c100',
+    color: '#9FC63B',
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 20,
-    textAlign: 'center',
+    marginBottom: 20
   },
   input: {
     width: '80%',
     borderBottomWidth: 1,
-    borderBottomColor: '#aaa',
+    borderBottomColor: '#fff',
     color: '#fff',
-    padding: 10,
-    marginVertical: 10,
+    padding: 8,
+    marginVertical: 5,
+    fontSize: 16,
   },
   submitButton: {
-    width: '80%',
-    backgroundColor: '#70c100',
-    padding: 15,
-    borderRadius: 5,
+    width: '50%',
+    backgroundColor: '#2A2D35',
+    borderWidth: 2,
+    borderColor: '#9FC63B',
+    paddingVertical: 15,
+    borderRadius: 10,
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: 50,
   },
   submitButtonText: {
     color: '#fff',
